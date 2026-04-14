@@ -1,0 +1,515 @@
+version: 1
+title: MCP Security Checklist
+tagline: Security review for teams building, deploying, or consuming Model Context Protocol servers.
+
+severities:
+  critical:
+    label: Critical
+    description: Exploitable vulnerability that should block deployment.
+  high:
+    label: High
+    description: Significant risk that needs a remediation plan before production.
+  medium:
+    label: Medium
+    description: Best practice that reduces attack surface.
+  low:
+    label: Low
+    description: Hardening measure for mature implementations.
+
+sections:
+  - id: auth
+    title: Authentication & Authorization
+    description: How clients prove who they are and what they're allowed to do.
+    groups:
+      - title: Server Authentication
+        items:
+          - id: auth-server-required
+            severity: critical
+            text: MCP server requires authentication for all connections (no anonymous access to tools).
+          - id: auth-server-validate-every-request
+            severity: critical
+            text: Authentication tokens are validated on every request, not just the initial connection.
+          - id: auth-server-token-expiry
+            severity: high
+            text: Server implements token expiration and refresh mechanisms.
+          - id: auth-server-tls
+            severity: high
+            text: API keys and tokens are transmitted only over encrypted channels (TLS 1.2+).
+          - id: auth-server-scoped-tokens
+            severity: medium
+            text: Server supports scoped tokens (different clients get different permissions).
+          - id: auth-server-log-failures
+            severity: medium
+            text: Failed authentication attempts are logged with client identifiers.
+          - id: auth-server-rate-limit
+            severity: medium
+            text: Rate limiting is applied to authentication endpoints.
+          - id: auth-server-mtls
+            severity: low
+            text: Server supports mutual TLS (mTLS) for high-security deployments.
+      - title: Client Authorization
+        items:
+          - id: authz-allowlist
+            severity: critical
+            text: Each client connection is authorized against an explicit allowlist of permitted tools.
+          - id: authz-tool-level
+            severity: high
+            text: Authorization checks happen at the tool level, not just the connection level.
+          - id: authz-default-deny
+            severity: high
+            text: 'Default-deny policy: new tools are inaccessible until explicitly granted.'
+          - id: authz-audit-log
+            severity: medium
+            text: Authorization decisions are logged for audit trails.
+          - id: authz-hidden-tools
+            severity: medium
+            text: Clients cannot discover tools they don't have permission to use.
+          - id: authz-rbac
+            severity: low
+            text: Support for role-based access control (RBAC) across multiple client types.
+      - title: Human-in-the-Loop
+        items:
+          - id: hitl-destructive-approval
+            severity: high
+            text: Destructive or irreversible operations require explicit human approval.
+          - id: hitl-approval-timeout
+            severity: medium
+            text: Approval workflows have timeouts (don't wait forever for human input).
+          - id: hitl-approval-context
+            severity: medium
+            text: Approval requests include full context of what the tool will do.
+          - id: hitl-approval-history
+            severity: low
+            text: Approval history is logged and auditable.
+
+  - id: input
+    title: Input Validation & Sanitization
+    description: What happens when the AI model sends unexpected, malicious, or malformed data to your tools.
+    groups:
+      - title: Parameter Validation
+        items:
+          - id: input-schema
+            severity: critical
+            text: All tool parameters are validated against a strict schema before execution.
+          - id: input-types-enforced
+            severity: critical
+            text: Parameter types are enforced (string, number, boolean, etc.), not just checked.
+          - id: input-string-length
+            severity: high
+            text: String parameters have maximum length limits.
+          - id: input-numeric-bounds
+            severity: high
+            text: Numeric parameters have min/max bounds.
+          - id: input-enum-values
+            severity: high
+            text: Enum parameters only accept defined values.
+          - id: input-array-limits
+            severity: medium
+            text: Array parameters have maximum item counts.
+          - id: input-nested-validation
+            severity: medium
+            text: Nested object parameters are validated recursively.
+          - id: input-custom-formats
+            severity: low
+            text: Custom validation rules for domain-specific formats (URLs, emails, file paths).
+      - title: Injection Prevention
+        items:
+          - id: inj-sql
+            severity: critical
+            text: Tool parameters are never interpolated directly into SQL queries (use parameterized queries).
+          - id: inj-shell
+            severity: critical
+            text: Tool parameters are never passed directly to shell commands (use safe APIs).
+          - id: inj-path-traversal
+            severity: critical
+            text: Tool parameters used in file paths are sanitized against path traversal (../ sequences).
+          - id: inj-xss
+            severity: high
+            text: Tool parameters rendered in HTML are escaped to prevent XSS.
+          - id: inj-downstream
+            severity: high
+            text: Tool parameters used in API calls to downstream services are sanitized.
+          - id: inj-log
+            severity: medium
+            text: Tool parameters used in log messages are sanitized (log injection prevention).
+          - id: inj-url-allowlist
+            severity: medium
+            text: URL parameters are validated against an allowlist of permitted domains.
+      - title: Prompt Injection Awareness
+        items:
+          - id: prompt-distrust-params
+            severity: critical
+            text: Tool implementations do not blindly trust content from AI-generated parameters.
+          - id: prompt-untrusted-output
+            severity: high
+            text: Tool outputs that will be fed back to the model are treated as untrusted input.
+          - id: prompt-sanitize-external
+            severity: high
+            text: Tools that read external content (web pages, files, emails) sanitize that content before returning it to the model.
+          - id: prompt-no-instr-in-desc
+            severity: medium
+            text: Tool descriptions and parameter descriptions don't contain instructions that could be manipulated.
+          - id: prompt-error-leakage
+            severity: medium
+            text: Error messages returned to the model don't leak sensitive system information.
+
+  - id: scoping
+    title: Tool Design & Permission Scoping
+    description: How your tools are designed and what they're allowed to do.
+    groups:
+      - title: Least Privilege
+        items:
+          - id: lp-min-perms
+            severity: critical
+            text: Each tool has the minimum permissions needed to do its job (no admin-level database access for a read-only query tool).
+          - id: lp-fs-sandbox
+            severity: critical
+            text: File system tools are sandboxed to specific directories.
+          - id: lp-db-readonly
+            severity: high
+            text: Database tools use read-only connections unless writes are explicitly required.
+          - id: lp-network-restricted
+            severity: high
+            text: Network tools are restricted to specific hosts/ports.
+          - id: lp-scoped-keys
+            severity: medium
+            text: Tools that interact with external APIs use scoped API keys (not master keys).
+          - id: lp-temp-creds
+            severity: medium
+            text: Temporary credentials are used where possible (short-lived tokens over permanent keys).
+      - title: Tool Boundaries
+        items:
+          - id: tb-one-job
+            severity: high
+            text: Each tool does one thing (no "swiss army knife" tools that combine read, write, delete, and admin operations).
+          - id: tb-separate-destructive
+            severity: high
+            text: Destructive operations (delete, update, send) are separate tools from read operations.
+          - id: tb-honest-naming
+            severity: medium
+            text: Tool names and descriptions accurately represent what the tool does (no hidden side effects).
+          - id: tb-blast-radius-doc
+            severity: medium
+            text: Tools have clear documentation of their blast radius (what's the worst thing this tool can do?).
+          - id: tb-side-effect-meta
+            severity: low
+            text: Tools declare their side effects in metadata (read-only vs. mutating).
+      - title: Resource Limits
+        items:
+          - id: rl-timeouts
+            severity: high
+            text: Tools have execution timeouts.
+          - id: rl-response-size
+            severity: high
+            text: Tools that return data have response size limits.
+          - id: rl-row-limits
+            severity: medium
+            text: Tools that query databases have row count limits.
+          - id: rl-file-size
+            severity: medium
+            text: Tools that read files have file size limits.
+          - id: rl-concurrency
+            severity: medium
+            text: Concurrent tool executions are limited per client.
+          - id: rl-monitoring
+            severity: low
+            text: Resource usage (CPU, memory, network) is monitored per tool.
+
+  - id: data
+    title: Data Flow & Privacy
+    description: What data goes in, what comes out, and who can see it.
+    groups:
+      - title: Data Exposure
+        items:
+          - id: de-tenant-isolation
+            severity: critical
+            text: Tool responses don't include data the requesting client shouldn't see (multi-tenant isolation).
+          - id: de-no-secrets
+            severity: critical
+            text: Credentials, API keys, and secrets are never included in tool responses.
+          - id: de-pii-mask
+            severity: high
+            text: PII is filtered or masked in tool responses unless explicitly needed.
+          - id: de-error-leakage
+            severity: high
+            text: Tool error messages don't leak internal system details (stack traces, file paths, connection strings).
+          - id: de-min-fields
+            severity: medium
+            text: Tool responses include only the fields needed, not entire database rows or API responses.
+          - id: de-no-plaintext-logs
+            severity: medium
+            text: Sensitive data in tool parameters is not logged in plain text.
+      - title: Data in Transit
+        items:
+          - id: dit-tls
+            severity: critical
+            text: All MCP communication uses TLS encryption.
+          - id: dit-no-disk-secrets
+            severity: high
+            text: Sensitive tool parameters (passwords, tokens, PII) are handled in memory, not written to disk.
+          - id: dit-cert-validation
+            severity: medium
+            text: MCP server validates TLS certificates (no certificate verification disabled).
+          - id: dit-cert-pinning
+            severity: low
+            text: Certificate pinning for high-security connections.
+      - title: Data at Rest
+        items:
+          - id: dar-encrypted-logs
+            severity: high
+            text: Tool execution logs containing sensitive data are encrypted at rest.
+          - id: dar-cache-encryption
+            severity: high
+            text: Cached tool responses containing sensitive data have TTLs and are encrypted.
+          - id: dar-state-encryption
+            severity: medium
+            text: Tool state/context stored between calls is encrypted.
+          - id: dar-data-classification
+            severity: low
+            text: Data classification labels are applied to tool outputs.
+      - title: Model Data Leakage
+        items:
+          - id: mdl-training-risk
+            severity: high
+            text: Consider what data from tool responses might end up in model training data.
+          - id: mdl-data-agreements
+            severity: high
+            text: Tools accessing proprietary data include appropriate data handling agreements.
+          - id: mdl-min-context
+            severity: medium
+            text: Tool responses are structured to minimize unnecessary context sent to the model.
+          - id: mdl-residency
+            severity: medium
+            text: Consider data residency requirements when tool data crosses regional boundaries.
+
+  - id: logging
+    title: Logging, Monitoring & Audit
+    description: How you know what happened, when, and whether it was supposed to.
+    groups:
+      - title: Logging
+        items:
+          - id: log-all-invocations
+            severity: critical
+            text: All tool invocations are logged (tool name, client ID, timestamp, success/failure).
+          - id: log-params-redacted
+            severity: high
+            text: Tool parameters are logged (with sensitive values redacted).
+          - id: log-error-context
+            severity: high
+            text: Failed tool executions include error context for investigation.
+          - id: log-correlation-ids
+            severity: medium
+            text: Logs include correlation IDs to trace a single agent session across multiple tool calls.
+          - id: log-structured
+            severity: medium
+            text: Log format is structured (JSON) for automated analysis.
+          - id: log-centralized
+            severity: low
+            text: Logs are shipped to a centralized logging system.
+      - title: Monitoring & Alerting
+        items:
+          - id: mon-anomaly-alerts
+            severity: high
+            text: Alerts fire on unusual tool invocation patterns (sudden spike, new tool being called, unusual hours).
+          - id: mon-auth-failures
+            severity: high
+            text: Alerts fire on repeated authentication failures.
+          - id: mon-sensitive-access
+            severity: medium
+            text: Alerts fire on tools accessing sensitive resources outside normal patterns.
+          - id: mon-dashboard
+            severity: medium
+            text: Dashboard showing tool usage, error rates, and latency.
+          - id: mon-anomaly-detection
+            severity: low
+            text: Anomaly detection on tool usage patterns per client.
+      - title: Audit Trail
+        items:
+          - id: audit-immutable
+            severity: high
+            text: Audit log is immutable (append-only, not modifiable by the MCP server process).
+          - id: audit-approvals
+            severity: high
+            text: Audit trail captures who approved human-in-the-loop actions.
+          - id: audit-retention
+            severity: medium
+            text: Audit logs are retained per your compliance requirements.
+          - id: audit-reconstructable
+            severity: medium
+            text: Audit trail can reconstruct the full sequence of tool calls in an agent session.
+          - id: audit-reviews
+            severity: low
+            text: Regular audit log reviews are scheduled.
+
+  - id: deployment
+    title: Deployment & Infrastructure
+    description: How the server runs and how it's kept secure.
+    groups:
+      - title: Server Hardening
+        items:
+          - id: sh-non-root
+            severity: critical
+            text: MCP server runs with minimal OS-level permissions (not as root).
+          - id: sh-network-isolation
+            severity: high
+            text: Server is deployed in an isolated network segment (not on the same host as production databases).
+          - id: sh-deps-scanned
+            severity: high
+            text: Server dependencies are scanned for known vulnerabilities.
+          - id: sh-minimal-image
+            severity: high
+            text: Server image/container is minimal (no unnecessary packages or tools).
+          - id: sh-readonly-fs
+            severity: medium
+            text: Server file system is read-only where possible.
+          - id: sh-memory-limits
+            severity: medium
+            text: Server process has memory limits to prevent resource exhaustion.
+          - id: sh-hardened-runtime
+            severity: low
+            text: Server runs in a hardened container runtime (gVisor, Kata Containers).
+      - title: Network Security
+        items:
+          - id: net-not-public
+            severity: critical
+            text: MCP server is not exposed to the public internet (unless that's the explicit design).
+          - id: net-policies
+            severity: high
+            text: Network policies restrict which clients can connect to the server.
+          - id: net-egress-restricted
+            severity: high
+            text: Outbound network access from the server is restricted to known destinations.
+          - id: net-dns-restricted
+            severity: medium
+            text: DNS resolution is restricted (prevent SSRF via DNS rebinding).
+          - id: net-zero-trust
+            severity: low
+            text: Network traffic is encrypted even within private networks (zero trust).
+      - title: Secrets Management
+        items:
+          - id: sec-secrets-manager
+            severity: critical
+            text: API keys, database credentials, and tokens are stored in a secrets manager (not in environment variables, config files, or code).
+          - id: sec-rotation
+            severity: high
+            text: Secrets are rotated on a regular schedule.
+          - id: sec-access-logged
+            severity: high
+            text: Secrets access is logged.
+          - id: sec-min-scope
+            severity: medium
+            text: Secrets have the minimum scope needed.
+          - id: sec-rotation-automated
+            severity: low
+            text: Secrets rotation is automated.
+      - title: Update & Patch Management
+        items:
+          - id: upm-deps-updated
+            severity: high
+            text: MCP server dependencies are updated regularly.
+          - id: upm-patch-sla
+            severity: high
+            text: Security patches are applied within a defined SLA.
+          - id: upm-tested-updates
+            severity: medium
+            text: Dependency updates are tested before deployment.
+          - id: upm-emergency-process
+            severity: medium
+            text: A process exists for emergency patching.
+          - id: upm-automation
+            severity: low
+            text: Automated dependency update PRs (Dependabot, Renovate).
+
+  - id: multi-agent
+    title: Multi-Agent & Chaining Risks
+    description: Risks specific to environments where multiple agents or chained tool calls interact.
+    groups:
+      - title: Agent Isolation
+        items:
+          - id: ai-data-isolation
+            severity: critical
+            text: One agent's tool calls cannot access another agent's data or session state.
+          - id: ai-session-isolation
+            severity: high
+            text: Agent sessions are isolated (one agent can't impersonate another).
+          - id: ai-no-cross-leak
+            severity: high
+            text: Tool results from one agent session can't leak into another.
+          - id: ai-per-agent-limits
+            severity: medium
+            text: Resource limits are applied per agent (one runaway agent doesn't starve others).
+      - title: Chain-of-Tool Risks
+        items:
+          - id: cot-revalidate
+            severity: high
+            text: Tool outputs are re-validated when used as inputs to subsequent tools.
+          - id: cot-max-depth
+            severity: high
+            text: There's a maximum depth for chained tool calls (prevent infinite loops).
+          - id: cot-priv-escalation
+            severity: medium
+            text: Escalation of privilege through chaining is considered (tool A returns data that gives tool B more access than intended).
+          - id: cot-halt
+            severity: medium
+            text: Tool chain execution can be halted mid-sequence if an issue is detected.
+      - title: Cross-Agent Communication
+        items:
+          - id: cac-authn
+            severity: high
+            text: If agents can trigger other agents, that path has its own authentication and authorization.
+          - id: cac-explicit-sharing
+            severity: medium
+            text: Cross-agent data sharing is explicit and audited.
+          - id: cac-trust-boundaries
+            severity: low
+            text: Cross-agent communication follows the same trust boundaries as client-to-server communication.
+
+  - id: ir
+    title: Incident Response & Recovery
+    description: What to do when something goes wrong.
+    groups:
+      - title: Preparation
+        items:
+          - id: prep-revoke-process
+            severity: high
+            text: There's a documented process for revoking MCP client access.
+          - id: prep-kill-switches
+            severity: high
+            text: Tool-level kill switches exist (disable individual tools without taking down the server).
+          - id: prep-runbook
+            severity: medium
+            text: Incident response runbook includes MCP-specific scenarios (compromised agent, data exfiltration via tools).
+          - id: prep-revocation-tested
+            severity: medium
+            text: Regular testing of access revocation procedures.
+          - id: prep-tabletop
+            severity: low
+            text: Tabletop exercises include AI/MCP attack scenarios.
+      - title: Detection & Response
+        items:
+          - id: dr-suspicious-alerts
+            severity: high
+            text: Suspicious tool usage patterns trigger automated alerts.
+          - id: dr-token-revocation
+            severity: high
+            text: Compromised client tokens can be revoked immediately.
+          - id: dr-global-pause
+            severity: medium
+            text: Tool execution can be paused globally in an emergency.
+          - id: dr-forensic-preservation
+            severity: medium
+            text: Forensic data is preserved during incidents (don't auto-rotate logs).
+          - id: dr-playbooks
+            severity: low
+            text: Automated response playbooks for common MCP security incidents.
+      - title: Recovery
+        items:
+          - id: rec-access-audit
+            severity: medium
+            text: Process exists for auditing what data was accessed during a compromise.
+          - id: rec-credential-rotation
+            severity: medium
+            text: Recovery procedures include rotating all potentially exposed credentials.
+          - id: rec-postmortem
+            severity: low
+            text: Post-incident review template includes MCP-specific questions.

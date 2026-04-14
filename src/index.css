@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* ============================================================
+   MCP SECURITY CHECKLIST — TAMPERTANTRUM DESIGN TOKENS
+   Mirrors main-site/src/app/globals.css. Dark only.
+   ============================================================ */
+
+@theme {
+  --color-tamper-red: #d32e20;
+  --color-ember-orange: #c2410c;
+  --color-warm-amber: #d97706;
+  --color-charcoal: #09090b;
+  --color-soft-white: #f2f2f2;
+  --color-muted-zinc: #a1a1aa;
+  --color-subtle-zinc: #8b8b96;
+  --color-icon-red: #f87171;
+
+  --color-sev-critical: #f87171;
+  --color-sev-high: #fb923c;
+  --color-sev-medium: #fbbf24;
+  --color-sev-low: #38bdf8;
+
+  --color-glass-start: rgba(255, 255, 255, 0.08);
+  --color-glass-end: rgba(255, 255, 255, 0.02);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-glass-border-hover: rgba(255, 255, 255, 0.2);
+
+  --font-jetbrains: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-space: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+
+  --radius-golden-md: 0.618rem;
+  --radius-golden-lg: 1rem;
+  --radius-golden-2xl: 1.5rem;
+
+  --shadow-glow-red: 0 10px 30px rgba(185, 28, 28, 0.3);
+  --shadow-glow-red-hover: 0 10px 30px rgba(220, 38, 38, 0.5);
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.05); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-20px) translateX(10px); }
+  50% { transform: translateY(-10px) translateX(-10px); }
+  75% { transform: translateY(10px) translateX(5px); }
+}
+
+@layer utilities {
+  .glass {
+    background-color: rgba(24, 24, 27, 0.85);
+    background-image: linear-gradient(
+      to bottom right,
+      var(--color-glass-start),
+      var(--color-glass-end)
+    );
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--radius-golden-2xl);
+  }
+
+  .glass-hover {
+    transition:
+      border-color 300ms ease,
+      background 300ms ease;
+  }
+
+  .glass-hover:hover {
+    border-color: var(--color-glass-border-hover);
+    background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0.06),
+      var(--color-glass-end)
+    );
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 20s ease-in-out infinite;
+  }
+}
+
+html {
+  overflow-x: hidden;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-inter);
+    background-color: var(--color-charcoal);
+    color: var(--color-soft-white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html, body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  ::selection {
+    background-color: rgba(211, 46, 32, 0.3);
+    color: var(--color-soft-white);
+  }
+
+  *:focus-visible {
+    outline: 2px solid rgba(248, 113, 113, 0.8);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  button, a, [role="button"], summary {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
