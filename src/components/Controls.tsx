@@ -1,5 +1,6 @@
 import type { Severity } from "../lib/types";
 import { SEVERITY_ORDER } from "../lib/loadChecklist";
+import { SEV_COLOR, SEV_LABEL } from "../lib/severity";
 
 interface Props {
   severityFilter: Set<Severity>;
@@ -10,20 +11,6 @@ interface Props {
   onCollapse: () => void;
   collapseDisabled: boolean;
 }
-
-const SEV_DOT: Record<Severity, string> = {
-  critical: "bg-[var(--color-sev-critical)]",
-  high: "bg-[var(--color-sev-high)]",
-  medium: "bg-[var(--color-sev-medium)]",
-  low: "bg-[var(--color-sev-low)]",
-};
-
-const SEV_LABEL: Record<Severity, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
 
 export function Controls({
   severityFilter,
@@ -55,7 +42,7 @@ export function Controls({
                     : "border-white/10 bg-transparent text-muted-zinc hover:border-white/20 hover:text-soft-white"
                 }`}
               >
-                <span className={`h-2 w-2 rounded-full ${SEV_DOT[sev]}`} />
+                <span className={`h-2 w-2 rounded-full ${SEV_COLOR[sev]}`} />
                 {SEV_LABEL[sev]}
               </button>
             );

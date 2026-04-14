@@ -1,24 +1,11 @@
 import type { Severity } from "../lib/types";
 import { ITEMS_BY_SEVERITY, SEVERITY_ORDER } from "../lib/loadChecklist";
+import { SEV_COLOR, SEV_LABEL } from "../lib/severity";
 
 interface Props {
   checked: Set<string>;
   severityFilter: Set<Severity>;
 }
-
-const SEV_BAR: Record<Severity, string> = {
-  critical: "bg-[var(--color-sev-critical)]",
-  high: "bg-[var(--color-sev-high)]",
-  medium: "bg-[var(--color-sev-medium)]",
-  low: "bg-[var(--color-sev-low)]",
-};
-
-const SEV_LABEL: Record<Severity, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
 
 export function OverallProgress({ checked, severityFilter }: Props) {
   const inScope = SEVERITY_ORDER.flatMap((s) =>
@@ -66,7 +53,7 @@ export function OverallProgress({ checked, severityFilter }: Props) {
                 </div>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className={`h-full ${SEV_BAR[sev]} transition-all duration-500`}
+                    className={`h-full ${SEV_COLOR[sev]} transition-all duration-500`}
                     style={{ width: `${sPct}%` }}
                   />
                 </div>

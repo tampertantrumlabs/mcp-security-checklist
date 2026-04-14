@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 const CHECKED_KEY = "mcp-security-checklist:v1:checked";
-const OPEN_KEY = "mcp-security-checklist:v1:open-sections";
+const OPEN_KEY = "mcp-security-checklist:v1:open-section";
 
 function loadStringSet(key: string): Set<string> {
   if (typeof window === "undefined") return new Set();

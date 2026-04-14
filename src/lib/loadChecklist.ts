@@ -1,8 +1,15 @@
 import yaml from "js-yaml";
 import checklistYaml from "../data/checklist.yaml?raw";
-import type { Checklist, ChecklistItem, Severity } from "./types";
+import {
+  ChecklistSchema,
+  type Checklist,
+  type ChecklistItem,
+  type Severity,
+} from "./types";
 
-export const checklist: Checklist = yaml.load(checklistYaml) as Checklist;
+export const checklist: Checklist = ChecklistSchema.parse(
+  yaml.load(checklistYaml),
+);
 
 export const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
 
